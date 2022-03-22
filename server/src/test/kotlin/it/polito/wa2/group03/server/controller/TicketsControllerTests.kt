@@ -19,7 +19,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class TicketsControllerTests {
+class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String) {
 
     @LocalServerPort
     var port: Int = 0
@@ -27,10 +27,7 @@ class TicketsControllerTests {
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
-    @Value("\${jwt.key}")
-    lateinit var keyString: String;
-
-    private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8));
+    private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8))
 
     @Test
     fun `valid ticket`() {

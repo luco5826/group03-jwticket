@@ -14,10 +14,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 @SpringBootTest
-class TicketingServiceTests() {
-
-    @Value("\${jwt.key}")
-    lateinit var keyString: String;
+class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String) {
 
     private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8))
 
