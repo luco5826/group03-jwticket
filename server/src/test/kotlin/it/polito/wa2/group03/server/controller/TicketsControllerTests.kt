@@ -6,6 +6,7 @@ import it.polito.wa2.group03.server.model.TicketPayload
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.client.postForEntity
@@ -18,7 +19,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class TicketsControllerTests {
+class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String) {
 
     @LocalServerPort
     var port: Int = 0
@@ -26,9 +27,7 @@ class TicketsControllerTests {
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
-    // TODO: Extract key into environment variable
-    private val keyString = "ebFWkwyCkiYWbmZhoDvOOKSQnRayUzpOfQpfBWLWeshroGkQFULEkxwdRMvbjKYb"
-    private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8));
+    private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8))
 
     @Test
     fun `valid ticket`() {
