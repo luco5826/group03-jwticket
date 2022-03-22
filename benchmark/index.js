@@ -1,8 +1,9 @@
+require("dotenv").config()
 const loadtest = require('loadtest');
 const jwt = require("jsonwebtoken")
 const fs = require("fs")
 const outputFileName = "result.csv"
-const privateKey = "ebFWkwyCkiYWbmZhoDvOOKSQnRayUzpOfQpfBWLWeshroGkQFULEkxwdRMvbjKYb"
+const privateKey = process.env["jwt.key"]
 const concurrentClients = [1,2,4,8,16,32]
 const url = 'http://localhost:8080/validate'
 const token = jwt.sign({
