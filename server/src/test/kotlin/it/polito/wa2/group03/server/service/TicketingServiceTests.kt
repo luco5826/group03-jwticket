@@ -6,17 +6,19 @@ import it.polito.wa2.group03.server.model.TicketPayload
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import java.nio.charset.StandardCharsets
 import java.security.Key
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-
 @SpringBootTest
 class TicketingServiceTests() {
 
-    private val keyString = "ebFWkwyCkiYWbmZhoDvOOKSQnRayUzpOfQpfBWLWeshroGkQFULEkxwdRMvbjKYb"
+    @Value("\${jwt.key}")
+    lateinit var keyString: String;
+
     private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8))
 
     @Autowired

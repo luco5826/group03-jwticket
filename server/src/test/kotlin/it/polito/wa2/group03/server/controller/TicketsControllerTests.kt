@@ -6,6 +6,7 @@ import it.polito.wa2.group03.server.model.TicketPayload
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.client.postForEntity
@@ -26,8 +27,9 @@ class TicketsControllerTests {
     @Autowired
     lateinit var restTemplate: TestRestTemplate
 
-    // TODO: Extract key into environment variable
-    private val keyString = "ebFWkwyCkiYWbmZhoDvOOKSQnRayUzpOfQpfBWLWeshroGkQFULEkxwdRMvbjKYb"
+    @Value("\${jwt.key}")
+    lateinit var keyString: String;
+
     private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8));
 
     @Test

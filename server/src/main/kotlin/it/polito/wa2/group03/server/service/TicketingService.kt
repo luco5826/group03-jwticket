@@ -5,13 +5,15 @@ import io.jsonwebtoken.JwtParser
 import io.jsonwebtoken.Jwts
 import it.polito.wa2.group03.server.model.TicketPayload
 import org.apache.tomcat.util.codec.binary.Base64
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
 class TicketingService {
 
-    // TODO: Extract key into environment variable
-    private val key = "ebFWkwyCkiYWbmZhoDvOOKSQnRayUzpOfQpfBWLWeshroGkQFULEkxwdRMvbjKYb"
+    @Value("\${jwt.key}")
+    lateinit var key: String;
+
     private val parser: JwtParser =
         Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
 
