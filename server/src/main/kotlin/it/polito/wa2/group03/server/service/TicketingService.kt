@@ -9,10 +9,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
-class TicketingService {
-
-    @Value("\${jwt.key}")
-    lateinit var key: String;
+class TicketingService(@Value("\${jwt.key}") private val key: String) {
 
     private val parser: JwtParser =
         Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
@@ -38,5 +35,4 @@ class TicketingService {
         }
         return ValidationResult.VALID
     }
-
 }
