@@ -23,6 +23,7 @@ class TicketsController {
             ValidationResult.UNSUPPORTED_ZONE -> ResponseEntity.status(HttpStatus.FORBIDDEN).body("Zone not supported")
             ValidationResult.EXPIRED -> ResponseEntity.status(HttpStatus.FORBIDDEN).body("Ticket expired")
             ValidationResult.NOT_VALID -> ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not valid")
+            ValidationResult.DUPLICATE -> ResponseEntity.status(HttpStatus.FORBIDDEN).body("Ticket already processed")
         }
     }
 }
