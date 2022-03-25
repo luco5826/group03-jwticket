@@ -1,7 +1,7 @@
 package it.polito.wa2.group03.server.controller
 
 import it.polito.wa2.group03.server.model.TicketPayload
-import it.polito.wa2.group03.server.service.TicketingService
+import it.polito.wa2.group03.server.service.TicketingServiceStateless
 import it.polito.wa2.group03.server.service.ValidationResult
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.RestController
 class TicketsController {
 
     @Autowired
-    lateinit var ticketingService: TicketingService
+    lateinit var ticketingServiceStateless: TicketingServiceStateless
 
     @PostMapping("/validate")
     fun validateTicket(@RequestBody payload: TicketPayload): ResponseEntity<String> {
-        return when (ticketingService.validateTicket(payload)) {
+        return when (ticketingServiceStateless.validateTicket(payload)) {
             ValidationResult.VALID -> ResponseEntity.status(HttpStatus.OK).body("Valid")
             ValidationResult.UNSUPPORTED_ZONE -> ResponseEntity.status(HttpStatus.FORBIDDEN).body("Zone not supported")
             ValidationResult.EXPIRED -> ResponseEntity.status(HttpStatus.FORBIDDEN).body("Ticket expired")

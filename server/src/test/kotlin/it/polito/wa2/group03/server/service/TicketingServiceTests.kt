@@ -19,7 +19,7 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
     private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8))
 
     @Autowired
-    lateinit var ticketingService: TicketingService
+    lateinit var ticketingServiceStateless: TicketingServiceStateless
 
     @Test
     fun acceptValidJWT() {
@@ -30,7 +30,7 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
             .compact()
         val zone = "4"
 
-        Assertions.assertEquals(ValidationResult.VALID, ticketingService.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(ValidationResult.VALID, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
     }
 
     @Test
@@ -42,7 +42,7 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
             .compact()
         val zone = "4"
 
-        Assertions.assertEquals(ValidationResult.EXPIRED, ticketingService.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(ValidationResult.EXPIRED, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
     }
 
     @Test
@@ -58,7 +58,7 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
 
         Assertions.assertEquals(
             ValidationResult.UNSUPPORTED_ZONE,
-            ticketingService.validateTicket(TicketPayload(zone, token))
+            ticketingServiceStateless.validateTicket(TicketPayload(zone, token))
         )
     }
 
@@ -74,7 +74,7 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
         /** mess up the signature by appending wrong characters at the end of the token */
         Assertions.assertEquals(
             ValidationResult.NOT_VALID,
-            ticketingService.validateTicket(TicketPayload(zone, token + "ERROR"))
+            ticketingServiceStateless.validateTicket(TicketPayload(zone, token + "ERROR"))
         )
     }
 
@@ -84,7 +84,7 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
         val token = ""
         val zone = ""
 
-        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingService.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
     }
 
     @Test
@@ -96,7 +96,7 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
             .compact()
         val zone = ""
 
-        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingService.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
     }
 
     @Test
@@ -108,6 +108,6 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
             .compact()
         val zone = "2"
 
-        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingService.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
     }
 }
