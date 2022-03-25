@@ -21,4 +21,9 @@ interface TicketingService {
      */
     fun validateZone(validityZones: String, ticketZone: String): ValidationResult
 
+    /**
+     * given a token it gets the validity zones.
+     */
+    fun getValidityZones(token: String): String
+
 }

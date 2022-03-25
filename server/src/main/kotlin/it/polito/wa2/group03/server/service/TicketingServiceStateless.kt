@@ -1,7 +1,6 @@
 package it.polito.wa2.group03.server.service
 
 import io.jsonwebtoken.ExpiredJwtException
-import io.jsonwebtoken.JwtParser
 import io.jsonwebtoken.Jwts
 import it.polito.wa2.group03.server.model.TicketPayload
 import org.apache.tomcat.util.codec.binary.Base64
@@ -11,14 +10,11 @@ import org.springframework.stereotype.Service
 @Service
 class TicketingServiceStateless(@Value("\${jwt.key}") private val key: String) : TicketingService {
 
-    private val parser: JwtParser =
-        Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
-
     override fun validateTicket(ticket: TicketPayload): ValidationResult {
 
         return try {
 
-            val validityZones = parser.parseClaimsJws(ticket.token).body.getValue("vz").toString()
+            val validityZones = getValidityZones(ticket.token)
             val ticketZone = ticket.zone
 
             this.validateZone(validityZones, ticketZone)
@@ -41,6 +37,12 @@ class TicketingServiceStateless(@Value("\${jwt.key}") private val key: String) :
             ValidationResult.VALID
         }
 
+    }
+
+    override fun getValidityZones(token: String): String {
+        val field = "vz"
+        val parser = Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
+        return parser.parseClaimsJws(token).body.getValue(field).toString()
     }
 
 }
