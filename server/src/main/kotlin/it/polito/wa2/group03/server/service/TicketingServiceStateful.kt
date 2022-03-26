@@ -6,23 +6,29 @@ import it.polito.wa2.group03.server.model.TicketPayload
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
-class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String): TicketingServiceStateless(key) {
+class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String) : TicketingServiceStateless(key) {
 
-    private var processedTickets: MutableList<String> = mutableListOf()
-    private val parser: JwtParser = Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
+    private var processedTickets = Collections.synchronizedList(mutableListOf<String>())
+    private val parser: JwtParser =
+        Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
 
     override fun validateTicket(ticket: TicketPayload): ValidationResult {
 
-        try{
+        try {
 
             val sub = this.getSub(ticket.token)
 
-            /** TODO: this is NOT thread-safe */
             when (processedTickets.contains(sub)) {
                 true -> return ValidationResult.DUPLICATE
-                false -> processedTickets.add(sub)
+                /**
+                 * this should guarantee that writes are performed synchronously
+                 * since processedTickets is a synchronizedList. requires proper
+                 * tests to make sure it actually works as expected.
+                 */
+                false -> synchronized(processedTickets) { processedTickets.add(sub) }
             }
 
             return super.validateTicket(ticket)
