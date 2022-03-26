@@ -10,19 +10,31 @@ import org.springframework.stereotype.Service
 @Service
 class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String): TicketingServiceStateless(key) {
 
-    private lateinit var processedTickets: MutableList<String>
+    private var processedTickets: MutableList<String> = mutableListOf()
     private val parser: JwtParser = Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
 
     override fun validateTicket(ticket: TicketPayload): ValidationResult {
 
-        val sub = this.getSub(ticket.token)
-        /** TODO: this is NOT thread-safe */
-        when (processedTickets.contains(sub)) {
-            true -> return ValidationResult.DUPLICATE
-            false -> processedTickets.add(sub)
-        }
+        try{
 
-        return super.validateTicket(ticket)
+            val sub = this.getSub(ticket.token)
+
+            /** TODO: this is NOT thread-safe */
+            when (processedTickets.contains(sub)) {
+                true -> return ValidationResult.DUPLICATE
+                false -> processedTickets.add(sub)
+            }
+
+            return super.validateTicket(ticket)
+
+        } catch (e: Exception) {
+            /**
+             * in case the sub field is not available the ticket
+             * should be validated as we cannot check its uniqueness.
+             * this also catches wrong signatures.
+             */
+            return ValidationResult.NOT_VALID
+        }
 
     }
 
