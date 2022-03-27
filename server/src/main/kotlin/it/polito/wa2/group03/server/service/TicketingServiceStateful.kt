@@ -10,7 +10,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
-class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String) : TicketingServiceStateless(key) {
+class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String): TicketingServiceStateless(key) {
 
     private var ticketQueue: Queue<String> = ConcurrentLinkedQueue()
     private val parser: JwtParser =
@@ -22,11 +22,15 @@ class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String) : 
 
             val sub = this.getSub(ticket.token)
 
-            when (sub in ticketQueue){
+            when (sub in ticketQueue) {
                 true -> return ValidationResult.DUPLICATE
                 false -> ticketQueue.add(sub)
             }
 
+            /**
+             * once we are sure the ticket is not a duplicate
+             * we can process it as we would do for any other.
+             */
             return super.validateTicket(ticket)
 
         } catch (e: Exception) {
