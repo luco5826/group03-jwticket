@@ -23,7 +23,13 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3.0.0
+        with:
+          java-version: '11'
+          distribution: 'zulu'
       - name: Setup Kotlin
         # You may pin to the exact commit or the version.
         # uses: fwilhe2/setup-kotlin@f5c4ad2f991043954a8c5d6b9d69fbed78e3eba6
@@ -31,7 +37,8 @@ jobs:
         with:
           # Version of the compiler to download, if not provided a default value is used.
           version: 1.6.10
-
+      - name: Setup secrets
+        run: echo "jwt.key=THIS_IS_A_TEST_KEY_FOR_GITHUB_ACTIONS" > "./server/src/main/resources/application.properties"
       # Runs a single command using the runners shell
       - name: Run tests
         run: cd server && ./gradlew test
