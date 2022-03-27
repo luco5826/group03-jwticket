@@ -7,11 +7,12 @@ import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
 class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String) : TicketingServiceStateless(key) {
 
-    private var processedTickets = Collections.synchronizedList(mutableListOf<String>())
+    private var ticketQueue: Queue<String> = ConcurrentLinkedQueue()
     private val parser: JwtParser =
         Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
 
@@ -21,14 +22,9 @@ class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String) : 
 
             val sub = this.getSub(ticket.token)
 
-            when (processedTickets.contains(sub)) {
+            when (sub in ticketQueue){
                 true -> return ValidationResult.DUPLICATE
-                /**
-                 * this should guarantee that writes are performed synchronously
-                 * since processedTickets is a synchronizedList. requires proper
-                 * tests to make sure it actually works as expected.
-                 */
-                false -> synchronized(processedTickets) { processedTickets.add(sub) }
+                false -> ticketQueue.add(sub)
             }
 
             return super.validateTicket(ticket)
