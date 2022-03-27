@@ -5,12 +5,14 @@ import io.jsonwebtoken.Jwts
 import it.polito.wa2.group03.server.model.TicketPayload
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
-class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String): TicketingServiceStateless(key) {
+@Primary
+class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String) : ITicketingService {
 
     private var ticketQueue: Queue<String> = ConcurrentLinkedQueue()
     private val parser: JwtParser =
@@ -18,35 +20,37 @@ class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String): T
 
     override fun validateTicket(ticket: TicketPayload): ValidationResult {
 
+        val validation = super.validateTicket(ticket)
+        if (validation !== ValidationResult.VALID)
+            return validation
+
+        // Proceed with further inspections if ticket is valid
+        val sub: String?
         try {
-
-            val sub = this.getSub(ticket.token)
-
-            when (sub in ticketQueue) {
-                true -> return ValidationResult.DUPLICATE
-                false -> ticketQueue.add(sub)
-            }
-
-            /**
-             * once we are sure the ticket is not a duplicate
-             * we can process it as we would do for any other.
-             */
-            return super.validateTicket(ticket)
-
+            sub = this.getSub(ticket.token)
         } catch (e: Exception) {
-            /**
-             * in case the sub field is not available the ticket
-             * should be validated as we cannot check its uniqueness.
-             * this also catches wrong signatures.
-             */
             return ValidationResult.NOT_VALID
         }
 
+        if (sub.isNullOrEmpty())
+            return ValidationResult.NOT_VALID
+
+        when (sub in ticketQueue) {
+            true -> return ValidationResult.DUPLICATE
+            false -> ticketQueue.add(sub)
+        }
+        return ValidationResult.VALID
+
     }
 
-    fun getSub(token: String): String {
-        val field = "sub"
+    override fun getValidityZones(token: String): String {
+        val field = "vz"
         return this.parser.parseClaimsJws(token).body.getValue(field).toString()
+    }
+
+    fun getSub(token: String): String? {
+        val field = "sub"
+        return this.parser.parseClaimsJws(token).body.getValue(field)?.toString()
     }
 
 }

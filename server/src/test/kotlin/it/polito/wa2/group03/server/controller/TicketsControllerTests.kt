@@ -13,11 +13,16 @@ import org.springframework.boot.test.web.client.postForEntity
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpStatus
+import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.annotation.DirtiesContext.ClassMode
 import java.nio.charset.StandardCharsets
 import java.security.Key
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
+// This attribute recreates the WebServer before each test, this is a simple-yet-ugly
+// workaround to re-initialize the already checked ticket list before each test
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String) {
 
@@ -33,7 +38,13 @@ class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String
     fun `valid ticket`() {
         val token = Jwts
             .builder()
-            .setClaims(mapOf("vz" to "1234", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
+            .setClaims(
+                mapOf(
+                    "sub" to "subject-ticket",
+                    "vz" to "1234",
+                    "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)
+                )
+            )
             .signWith(key)
             .compact()
         val zone = "2"
@@ -51,7 +62,13 @@ class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String
     fun `empty zone`() {
         val token = Jwts
             .builder()
-            .setClaims(mapOf("vz" to "1234", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
+            .setClaims(
+                mapOf(
+                    "sub" to "subject-ticket",
+                    "vz" to "1234",
+                    "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)
+                )
+            )
             .signWith(key)
             .compact()
         val zone = ""
@@ -69,7 +86,13 @@ class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String
     fun `unsupported zone`() {
         val token = Jwts
             .builder()
-            .setClaims(mapOf("vz" to "1234", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
+            .setClaims(
+                mapOf(
+                    "sub" to "subject-ticket",
+                    "vz" to "1234",
+                    "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)
+                )
+            )
             .signWith(key)
             .compact()
         val zone = "5"
@@ -87,7 +110,13 @@ class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String
     fun `wrong jwt signature`() {
         val token = Jwts
             .builder()
-            .setClaims(mapOf("vz" to "1234", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
+            .setClaims(
+                mapOf(
+                    "sub" to "subject-ticket",
+                    "vz" to "1234",
+                    "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)
+                )
+            )
             .signWith(key)
             .compact()
         val zone = "2"
@@ -105,7 +134,13 @@ class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String
     fun `empty validity zones`() {
         val token = Jwts
             .builder()
-            .setClaims(mapOf("vz" to "", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
+            .setClaims(
+                mapOf(
+                    "sub" to "subject-ticket",
+                    "vz" to "",
+                    "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)
+                )
+            )
             .signWith(key)
             .compact()
         val zone = "2"
@@ -123,7 +158,13 @@ class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String
     fun `expired jwt`() {
         val token = Jwts
             .builder()
-            .setClaims(mapOf("vz" to "123", "exp" to LocalDateTime.now().minusDays(1).toEpochSecond(ZoneOffset.UTC)))
+            .setClaims(
+                mapOf(
+                    "sub" to "subject-ticket",
+                    "vz" to "123",
+                    "exp" to LocalDateTime.now().minusDays(1).toEpochSecond(ZoneOffset.UTC)
+                )
+            )
             .signWith(key)
             .compact()
         val zone = "2"
@@ -135,5 +176,58 @@ class TicketsControllerTests(@Value("\${jwt.key}") private val keyString: String
             request
         )
         Assertions.assertEquals(HttpStatus.FORBIDDEN, response.statusCode)
+    }
+
+    @Test
+    fun `missing sub field`() {
+        val token = Jwts
+            .builder()
+            .setClaims(
+                mapOf(
+                    "vz" to "123",
+                    "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)
+                )
+            )
+            .signWith(key)
+            .compact()
+        val zone = "2"
+
+        val baseUrl = "http://localhost:$port"
+        val request = HttpEntity(TicketPayload(zone, token))
+        val response = restTemplate.postForEntity<String>(
+            "$baseUrl/validate",
+            request
+        )
+        Assertions.assertEquals(HttpStatus.FORBIDDEN, response.statusCode)
+    }
+
+    @Test
+    fun `duplicate sub field`() {
+        val builder = Jwts
+            .builder()
+            .setClaims(
+                mapOf(
+                    "sub" to "subject-ticket",
+                    "vz" to "123",
+                    "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)
+                )
+            )
+            .signWith(key)
+        val zone = "2"
+        val baseUrl = "http://localhost:$port"
+
+        val token1 = builder.compact()
+        val token2 = builder.compact()
+
+        val response1 = restTemplate.postForEntity<String>(
+            "$baseUrl/validate",
+            HttpEntity(TicketPayload(zone, token1))
+        )
+        val response2 = restTemplate.postForEntity<String>(
+            "$baseUrl/validate",
+            HttpEntity(TicketPayload(zone, token2))
+        )
+        Assertions.assertEquals(HttpStatus.OK, response1.statusCode)
+        Assertions.assertEquals(HttpStatus.FORBIDDEN, response2.statusCode)
     }
 }
