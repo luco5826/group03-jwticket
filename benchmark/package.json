@@ -12,6 +12,7 @@
   "dependencies": {
     "dotenv": "^16.0.0",
     "jsonwebtoken": "^8.5.1",
-    "loadtest": "^5.2.0"
+    "loadtest": "^5.2.0",
+    "yargs": "^17.4.0"
   }
 }

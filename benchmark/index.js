@@ -2,9 +2,19 @@ require("dotenv").config()
 const loadtest = require('loadtest');
 const jwt = require("jsonwebtoken")
 const fs = require("fs")
+const yargs = require("yargs")
+const {hideBin} = require('yargs/helpers')
+const argv = yargs(hideBin(process.argv))
+    .option('clients', {
+        alias: 'c',
+        demandOption: true,
+        describe: "Number of concurrent clients",
+        type: "number"
+    })
+    .usage("node index.js --clients [number]")
+    .argv
 const outputFileName = "result.csv"
 const privateKey = process.env["jwt.key"]
-const concurrentClients = [1,2,4,8,16,32]
 const url = 'http://localhost:8080/validate'
 const token = jwt.sign({
         "sub": "user",
@@ -17,23 +27,14 @@ const token = jwt.sign({
 let options = {
     url,
     maxRequests: 10000,
-    concurrency: 1,
+    concurrency: argv.clients,
     method: 'POST',
     body: { zone: "1", token  },
     contentType: 'application/json'
 
 };
-for (const clients of concurrentClients) {
-    options.concurrency = clients
-    loadtest.loadTest(options, function(error, result)
-    {
-        if (error)
-        {
-            return console.error('Got an error: %s', error);
-        }
-        console.log('Tests run successfully for %d', clients)
-        fs.appendFileSync(outputFileName, `${clients},${result.totalRequests},${result.totalErrors},${result.totalTimeSeconds}, ${result.rps},${result.meanLatencyMs},${result.maxLatencyMs},${result.minLatencyMs}\n`)
-        //console.log(result);
-    });
-}
 
+loadtest.loadTest(options, (err, result) => {
+    fs.appendFileSync(outputFileName, `${argv.clients},${result.totalRequests},${result.totalErrors},${result.totalTimeSeconds}, ${result.rps},${result.meanLatencyMs},${result.maxLatencyMs},${result.minLatencyMs}\n`)
+    console.log(`Test finished for ${argv.clients} clients`)
+})

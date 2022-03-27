@@ -24,6 +24,7 @@ dependencies {
     implementation ("io.jsonwebtoken:jjwt-api:0.11.2")
     runtimeOnly ("io.jsonwebtoken:jjwt-impl:0.11.2")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.2")
+    implementation("com.codahale:usl4j:0.7.0")
 }
 
 tasks.withType<KotlinCompile> {
