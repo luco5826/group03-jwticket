@@ -13,16 +13,15 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class TicketsController {
 
-    /** ticketingServiceStateless: TicketingServiceStateless */
+    /**
+     * for testing purposes of stateless implementation
+     * use branch 'stateless-service' as it is ready to go.
+     */
     @Autowired
     lateinit var ticketingServiceStateful: TicketingServiceStateful
 
     @PostMapping("/validate")
     fun validateTicket(@RequestBody payload: TicketPayload): ResponseEntity<String> {
-        /**
-         * ticketingServiceStateless.validateTicket(payload)
-         * DUPLICATE is not needed if stateless.
-         */
         return when (ticketingServiceStateful.validateTicket(payload)) {
             ValidationResult.VALID -> ResponseEntity.status(HttpStatus.OK).body("Valid")
             ValidationResult.UNSUPPORTED_ZONE -> ResponseEntity.status(HttpStatus.FORBIDDEN).body("Zone not supported")
