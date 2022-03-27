@@ -6,25 +6,31 @@ import it.polito.wa2.group03.server.model.TicketPayload
 import org.apache.tomcat.util.codec.binary.Base64
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
 class TicketingServiceStateful(@Value("\${jwt.key}") private val key: String): TicketingServiceStateless(key) {
 
-    private var processedTickets: MutableList<String> = mutableListOf()
-    private val parser: JwtParser = Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
+    private var ticketQueue: Queue<String> = ConcurrentLinkedQueue()
+    private val parser: JwtParser =
+        Jwts.parserBuilder().setSigningKey(Base64.encodeBase64String(key.toByteArray())).build()
 
     override fun validateTicket(ticket: TicketPayload): ValidationResult {
 
-        try{
+        try {
 
             val sub = this.getSub(ticket.token)
 
-            /** TODO: this is NOT thread-safe */
-            when (processedTickets.contains(sub)) {
+            when (sub in ticketQueue) {
                 true -> return ValidationResult.DUPLICATE
-                false -> processedTickets.add(sub)
+                false -> ticketQueue.add(sub)
             }
 
+            /**
+             * once we are sure the ticket is not a duplicate
+             * we can process it as we would do for any other.
+             */
             return super.validateTicket(ticket)
 
         } catch (e: Exception) {
