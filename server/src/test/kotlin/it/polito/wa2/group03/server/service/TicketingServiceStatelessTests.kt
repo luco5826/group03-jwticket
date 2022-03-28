@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 @SpringBootTest
-class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String) {
+class TicketingServiceStatelessTests(@Value("\${jwt.key}") private val keyString: String) {
 
     private val key: Key = Keys.hmacShaKeyFor(keyString.toByteArray(StandardCharsets.UTF_8))
 
@@ -25,30 +25,39 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
     fun acceptValidJWT() {
         val token = Jwts
             .builder()
+            .setSubject("subject-ticket")
             .setClaims(mapOf("vz" to "1234", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
             .signWith(key)
             .compact()
         val zone = "4"
 
-        Assertions.assertEquals(ValidationResult.VALID, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(
+            ValidationResult.VALID,
+            ticketingServiceStateless.validateTicket(TicketPayload(zone, token))
+        )
     }
 
     @Test
     fun rejectExpiredJWT() {
         val token = Jwts
             .builder()
+            .setSubject("subject-ticket")
             .setClaims(mapOf("vz" to "1234", "exp" to LocalDateTime.now().minusDays(1).toEpochSecond(ZoneOffset.UTC)))
             .signWith(key)
             .compact()
         val zone = "4"
 
-        Assertions.assertEquals(ValidationResult.EXPIRED, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(
+            ValidationResult.EXPIRED,
+            ticketingServiceStateless.validateTicket(TicketPayload(zone, token))
+        )
     }
 
     @Test
     fun rejectZoneNotSupportedJWT() {
         val token = Jwts
             .builder()
+            .setSubject("subject-ticket")
             .setClaims(mapOf("vz" to "1234", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
             .signWith(key)
             .compact()
@@ -66,6 +75,7 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
     fun rejectNotValidJWT() {
         val token = Jwts
             .builder()
+            .setSubject("subject-ticket")
             .setClaims(mapOf("vz" to "1234", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
             .signWith(key)
             .compact()
@@ -84,30 +94,41 @@ class TicketingServiceTests(@Value("\${jwt.key}") private val keyString: String)
         val token = ""
         val zone = ""
 
-        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(
+            ValidationResult.NOT_VALID,
+            ticketingServiceStateless.validateTicket(TicketPayload(zone, token))
+        )
     }
 
     @Test
     fun emptyZoneJWT() {
         val token = Jwts
             .builder()
+            .setSubject("subject-ticket")
             .setClaims(mapOf("vz" to "123", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
             .signWith(key)
             .compact()
         val zone = ""
 
-        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(
+            ValidationResult.NOT_VALID,
+            ticketingServiceStateless.validateTicket(TicketPayload(zone, token))
+        )
     }
 
     @Test
     fun emptyValidityZonesJWT() {
         val token = Jwts
             .builder()
+            .setSubject("subject-ticket")
             .setClaims(mapOf("vz" to "", "exp" to LocalDateTime.now().plusDays(1).toEpochSecond(ZoneOffset.UTC)))
             .signWith(key)
             .compact()
         val zone = "2"
 
-        Assertions.assertEquals(ValidationResult.NOT_VALID, ticketingServiceStateless.validateTicket(TicketPayload(zone, token)))
+        Assertions.assertEquals(
+            ValidationResult.NOT_VALID,
+            ticketingServiceStateless.validateTicket(TicketPayload(zone, token))
+        )
     }
 }
