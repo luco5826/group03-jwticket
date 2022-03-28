@@ -5,7 +5,6 @@ import java.io.File
 import jetbrains.letsPlot.letsPlot
 import jetbrains.letsPlot.geom.geomLine
 import jetbrains.letsPlot.geom.geomPoint
-import jetbrains.letsPlot.geom.geomSmooth
 import jetbrains.letsPlot.scale.scaleXDiscrete
 import jetbrains.letsPlot.export.ggsave
 
@@ -23,15 +22,31 @@ class ExpectedBenchmark(private val measurements: List<Pair<Int, Double>>) {
 
     fun plot() {
         val (xs,ys) = measurements.unzip()
-        val data = mapOf (
+        val realData = mapOf (
                 "Concurrency" to xs,
                 "Throughput" to ys
         )
 
-        val p = letsPlot(data) { x = "Concurrency"; y = "Throughput" } +
-                geomLine(data, size=1) +
-                geomPoint() +
-                geomSmooth(color="red", deg=2, se=false) +
+        val model = buildModel()
+        var i = 1
+        val maxNumberOfClients = 256
+        val xs2 = mutableListOf<Int>()
+        val ys2 = mutableListOf<Double>()
+        while (i <= maxNumberOfClients) {
+            val thrAtI = model(i)
+            xs2.add(thrAtI.first)
+            ys2.add(thrAtI.second)
+            i++
+        }
+        val modelData = mapOf (
+                "Concurrency" to xs2,
+                "Throughput" to ys2
+        )
+
+        val p = letsPlot(null) { x = "Concurrency"; y = "Throughput" } +
+                geomLine(modelData, size=0.7, color="red") +
+                geomLine(realData, size=1) +
+                geomPoint(realData, size=3) +
                 scaleXDiscrete(name="Concurrency", breaks=xs, labels=xs.map{it.toString()})
 
 
@@ -41,13 +56,14 @@ class ExpectedBenchmark(private val measurements: List<Pair<Int, Double>>) {
 
 fun main() {
     val fileName = File("server/src/main/kotlin/it/polito/wa2/group03/server/benchmark/results.csv")
-    val measurements = listOf((32 to 1113.0), (16 to 555.0), (8 to 410.0), (4 to 465.0), (2 to 459.0), (1 to 314.0))
+    val measurements = listOf((1 to 570.0), (2 to 1313.0), (4 to 1686.0), (8 to 2204.0), (16 to 2340.0),
+            (32 to 2469.0), (64 to 2592.0), (128 to 2564.0), (256 to 2517.0))
     val benchmark = ExpectedBenchmark(measurements)
     val benchmarkModel = benchmark.buildModel()
-    val maxNumberOfClients = 100
-    var i = 0
+    val maxNumberOfClients = 256
+    var i = 1
     fileName.writeText("clients,rps\n")
-    while (i < maxNumberOfClients) {
+    while (i <= maxNumberOfClients) {
         fileName.appendText("${benchmarkModel(i).first},${benchmarkModel(i).second}\n")
         i++
     }
